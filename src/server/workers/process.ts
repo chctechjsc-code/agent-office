@@ -106,6 +106,20 @@ export function shq(s: string) {
 }
 
 /**
+ * One argument of a command line the office writes down for *another program* to run — a hook
+ * command in an agent's own configuration, say — where the shell reading it is the machine's own.
+ *
+ * `shq` above is POSIX, and Windows does not read it: cmd.exe takes a single quote for a plain
+ * character, so `'C:\Program Files\nodejs\node.exe'` is a path that does not exist and the command
+ * fails before the hook can run ("The filename, directory name, or volume label syntax is
+ * incorrect"). On Windows the argument is quoted the way cmd.exe and Windows' own command-line
+ * parser both read, which is the same quoting `viaShell` uses.
+ */
+export function shellArg(s: string, win = WIN): string {
+  return win ? cmdQuote(s) : shq(s);
+}
+
+/**
  * Writes the office-queue and office-workers commands into the data dir's bin/, each running its
  * script in bin/ with the office's own node, and returns that directory. Rewritten on every start,
  * so after an upgrade they run the new install's scripts.
