@@ -3,9 +3,10 @@ import { lastFloor, store, type Profile, type Spot } from './state';
 
 type Handler = (msg: ServerMsg) => void;
 
-/** The sign-in page, coming back to the 2D view afterwards if that's where you are (see login.ts). */
+/** The sign-in page, coming back to the 2D page afterwards if that's where you are (see login.ts). */
 export function loginUrl(): string {
-  return location.pathname === '/lite' ? '/login?next=/lite' : '/login';
+  const here = location.pathname;
+  return here === '/lite' || here === '/pixel' ? `/login?next=${here}` : '/login';
 }
 
 export class Net {
