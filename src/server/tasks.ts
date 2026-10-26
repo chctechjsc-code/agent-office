@@ -6,6 +6,7 @@
 import { spawn } from 'node:child_process';
 import os from 'node:os';
 import type { WorkerTask } from '../shared/protocol.js';
+import { viaShell } from './workers/process.js';
 
 /** What a worker has been asked and has been doing lately. */
 export interface TaskContext {
@@ -149,11 +150,13 @@ function run(claude: string, env: Record<string, string>, system: string, input:
       clearTimeout(timer);
       resolve(v);
     };
-    const child = spawn(claude, args, {
+    const run = viaShell(claude, args);
+    const child = spawn(run.file, run.args, {
       // A neutral directory, so it doesn't pick up the project's CLAUDE.md.
       cwd: os.tmpdir(),
       env: { ...env, MAX_THINKING_TOKENS: '0' },
       stdio: ['pipe', 'pipe', 'ignore'],
+      shell: run.shell,
     });
     const timer = setTimeout(() => {
       child.kill('SIGKILL');

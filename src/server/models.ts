@@ -6,6 +6,7 @@ import { closeSync, mkdtempSync, openSync, readFileSync, rmSync, statSync } from
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { AGENT_EFFORTS, isValidCodexModel, isValidCursorModel, isValidGrokModel, isValidOpenCodeModel, type AgentProvider, type ModelOption } from '../shared/providers.js';
+import { viaShell } from './workers/process.js';
 
 /** A CLI that lists its models in a second or two takes ten times that on a busy machine. */
 export const MODEL_COMMAND_TIMEOUT_MS = 30_000;
@@ -38,7 +39,8 @@ const runModelCommand: ModelCommandRunner = async (file, args, options) => {
   const fd = openSync(out, 'w', 0o600);
   try {
     await new Promise<void>((resolve, reject) => {
-      const child = spawn(file, args, { cwd: options.cwd, timeout: options.timeout, stdio: ['ignore', fd, 'ignore'] });
+      const run = viaShell(file, args);
+      const child = spawn(run.file, run.args, { cwd: options.cwd, timeout: options.timeout, stdio: ['ignore', fd, 'ignore'], shell: run.shell });
       child.on('error', reject);
       child.on('close', (code, signal) => (code === 0 ? resolve() : reject(new Error(`ended with ${signal ?? code}`))));
     });
@@ -130,7 +132,7 @@ export async function fetchGrokModels(command: string, cwd: string, runner: Mode
 }
 
 /**
- * Run `codex debug models` without a shell: Codex's catalogue as JSON, of which the office takes
+ * Run `codex debug models`: Codex's catalogue as JSON, of which the office takes
  * the models its own picker lists, what each is called and the reasoning efforts it supports.
  */
 export async function fetchCodexModels(command: string, cwd: string, runner: ModelCommandRunner = runModelCommand): Promise<ModelOption[]> {
