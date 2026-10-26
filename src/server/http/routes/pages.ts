@@ -26,6 +26,8 @@ export const pageRoutes = {
   office: { path: ['/', '/index.html'], auth: 'session', handle: page('index.html') },
   // The 2D view: the workers, their terminals and the boards, without the 3D office (lite.ts).
   lite: { path: ['/lite', '/lite.html'], auth: 'session', handle: page('lite.html') },
+  // The same floor from above, drawn on a canvas, a character at every desk (pixel.ts).
+  pixel: { path: ['/pixel', '/pixel.html'], auth: 'session', handle: page('pixel.html') },
   /** Anything else in the bundle; last, since it answers every path. */
   bundle: {
     prefix: '/',

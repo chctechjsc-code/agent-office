@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#fff1de" />
+    <title>Agent Office</title>
+    <link rel="icon" href="/favicon.svg" />
+  </head>
+  <body class="pixel">
+    <!-- The pixel office (pixel.ts): the floor from above, a character at every desk. -->
+    <header class="pixel-bar">
+      <label class="pixel-floor" title="The floor you're on: pick another to see its room">
+        <span class="pixel-floor-label">Floor</span>
+        <select id="floor" aria-label="Floor"></select>
+      </label>
+      <span id="waiting-now" class="pixel-waiting"></span>
+      <a id="to-lite" class="btn" href="/lite" title="The list of workers">📋 List</a>
+      <a id="to-3d" class="btn" href="/?3d=1" title="The 3D office, where you walk around">🏢 3D</a>
+    </header>
+    <main class="pixel-main">
+      <p id="floor-meta" class="pixel-meta"></p>
+      <div class="pixel-room">
+        <canvas id="room" aria-label="The floor from above: a character at every desk. Click one to open its terminal."></canvas>
+      </div>
+    </main>
+    <nav class="pixel-nav" aria-label="Office">
+      <button id="btn-issues" class="btn" type="button">📌 Issues <span class="n"></span></button>
+      <button id="btn-pulls" class="btn" type="button">🔀 PRs <span class="n"></span></button>
+      <button id="btn-queue" class="btn" type="button">📋 Queue <span class="n"></span></button>
+      <button id="btn-new" class="btn primary" type="button">✨ New task</button>
+    </nav>
+    <div id="toasts"></div>
+    <div id="conn" class="conn hidden">Reconnecting…</div>
+    <div id="modal-root"></div>
+    <script type="module" src="./pixel.ts"></script>
+  </body>
+</html>
