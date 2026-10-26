@@ -6,6 +6,7 @@
 import { spawn } from 'node:child_process';
 import os from 'node:os';
 import type { PlanLimits, PlanWindow } from '../shared/protocol.js';
+import { viaShell } from './workers/process.js';
 
 const POLL_MS = 2 * 60_000;
 /** Someone walking in, or clicking the meter, reads again, at most this often. */
@@ -130,7 +131,8 @@ function ask(claude: string, env: Record<string, string>): Promise<any> {
   return new Promise((resolve) => {
     let settled = false;
     let buf = '';
-    const child = spawn(claude, args, { cwd: os.tmpdir(), env, stdio: ['pipe', 'pipe', 'ignore'] });
+    const run = viaShell(claude, args);
+    const child = spawn(run.file, run.args, { cwd: os.tmpdir(), env, stdio: ['pipe', 'pipe', 'ignore'], shell: run.shell });
     const finish = (v: any) => {
       if (settled) return;
       settled = true;

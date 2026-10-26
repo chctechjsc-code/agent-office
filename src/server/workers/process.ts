@@ -28,6 +28,32 @@ export function shellRun(line: string): string[] {
   return WIN && !process.env.SHELL ? ['/d', '/s', '/c', line] : ['-l', '-i', '-c', line];
 }
 
+/**
+ * How to hand `file` to `child_process.spawn`. On Windows a CLI installed by npm is a `.cmd` shim —
+ * a batch script — and since Node 20 spawn refuses to run one without a shell, failing with EINVAL
+ * before the process ever starts. `resolveCommand` hands back exactly such a path (`claude.CMD`),
+ * which the terminals run through node-pty without trouble; these are the places that spawn a CLI
+ * for its output instead.
+ *
+ * Through a shell the command line is one string cmd.exe parses again, so the file and every
+ * argument are quoted here, and the whole line comes back as `file` with nothing in `args`: Node
+ * only joins the two with spaces anyway, and warns (DEP0190) when it has to, since it cannot know
+ * they were quoted. An empty argument needs its quotes most of all: unquoted it drops out of the
+ * line, and the flag before it would swallow the next one. A `%` is left as it is, since cmd
+ * expands `%VAR%` inside quotes too; no caller passes one.
+ *
+ * Anywhere but Windows, and for a real executable, nothing changes.
+ */
+export function viaShell(file: string, args: string[], win = WIN): { file: string; args: string[]; shell: boolean } {
+  if (!win || !/\.(?:cmd|bat)$/i.test(file)) return { file, args, shell: false };
+  return { file: [file, ...args].map(cmdQuote).join(' '), args: [], shell: true };
+}
+
+/** One argument as cmd.exe reads it: quoted when it is empty or holds anything cmd would act on. */
+function cmdQuote(s: string): string {
+  return s === '' || /["\s^&|<>()]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
 export function resolveCommand(cmd: string): string | null {
   // Windows runs files by extension: `claude` is really claude.exe / claude.cmd. An npm shim with
   // no extension is a sh script the console can't run, so only take it when asked for by name.

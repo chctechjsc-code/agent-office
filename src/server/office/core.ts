@@ -5,6 +5,7 @@ import { Accounts } from '../accounts.js';
 import { providerCommand } from '../agents.js';
 import type { AgentProvider } from '../../shared/providers.js';
 import { createModelCatalogues } from '../models.js';
+import { WIN, resolveCommand } from '../workers/process.js';
 import { Building } from '../building.js';
 import type { Floor } from '../floor.js';
 import { ChatLog } from '../history.js';
@@ -33,7 +34,11 @@ export function createCore(ctx: Ctx, cfg: Config, publicDir: string): Core {
   // The model lists come from the provider's own CLI: the office's --agent when it's that one.
   const cli = (provider: AgentProvider) => {
     const command = providerCommand(provider, cfg.agentCmd);
-    return command.includes('/') ? path.resolve(command) : command;
+    // On Windows a bare name is no use to spawn: it runs files by extension, and the extensionless
+    // shim npm writes next to `codex.cmd` is a sh script CreateProcess can't start. resolveCommand
+    // picks the .cmd, which viaShell then runs through a shell.
+    const found = WIN ? resolveCommand(command) : null;
+    return found ?? (command.includes('/') ? path.resolve(command) : command);
   };
   const models = createModelCatalogues(cli, cfg.dir);
 
