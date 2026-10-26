@@ -5,7 +5,7 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { viaShell } from '../src/server/workers/process.js';
+import { shellArg, viaShell } from '../src/server/workers/process.js';
 
 test('a real executable is spawned as it is, on Windows and anywhere else', () => {
   for (const win of [true, false]) {
@@ -39,4 +39,24 @@ test('off Windows nothing goes through a shell, even for a file named .cmd', () 
   const run = viaShell('/usr/bin/claude.cmd', ['', '--tools'], false);
   assert.equal(run.shell, false);
   assert.deepEqual(run.args, ['', '--tools']);
+});
+
+// --- A command line written down for another program's shell to read (see shellArg) -------------
+
+test('an argument of a hook command is quoted for the shell that will read it', () => {
+  const node = 'C:\\Program Files\\nodejs\\node.exe';
+  assert.equal(shellArg(node, true), `"${node}"`);
+  assert.equal(shellArg(node, false), `'${node}'`);
+  // Nothing to act on: left bare either way, so the line stays readable.
+  assert.equal(shellArg('SessionStart', true), 'SessionStart');
+  assert.equal(shellArg("/usr/local/bin/node", false), `'/usr/local/bin/node'`);
+});
+
+test("Codex's hook command runs on Windows: cmd.exe reads double quotes, never POSIX single ones", () => {
+  const hook = 'C:\\Users\\PC\\agent-office\\projects\\owner\\repo\\.agent-office\\agent-office-codex-hook.cjs';
+  const line = ['C:\\Program Files\\nodejs\\node.exe', hook, 'SessionStart'].map((a) => shellArg(a, true)).join(' ');
+  // Single quotes here are what made cmd.exe answer "The filename, directory name, or volume label
+  // syntax is incorrect" and the hook exit 1 before it ever started.
+  assert.doesNotMatch(line, /'/);
+  assert.equal(line, `"C:\\Program Files\\nodejs\\node.exe" ${hook} SessionStart`);
 });
